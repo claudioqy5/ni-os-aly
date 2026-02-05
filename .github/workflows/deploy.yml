@@ -20,14 +20,14 @@ jobs:
         username: ${{ secrets.VPS_USER }}
         key: ${{ secrets.VPS_SSH_KEY }}
         script: |
-          cd /ruta/a/tu/proyecto/niños-aly
+          cd /var/www/ninos-aly
           
           # Pull últimos cambios
           git pull origin main
           
           # Backend
           cd backend
-          source venv/bin/activate
+          source ../venv/bin/activate
           pip install -r requirements.txt
           
           # Frontend
@@ -35,8 +35,8 @@ jobs:
           npm install
           npm run build
           
-          # Reiniciar servicios (ajusta según tu configuración)
-          sudo systemctl restart ninos-aly-backend
-          sudo systemctl restart ninos-aly-frontend
+          # Reiniciar servicios
+          sudo systemctl restart ninos-backend
+          sudo systemctl reload nginx
           
           echo "✅ Deploy completado exitosamente!"
