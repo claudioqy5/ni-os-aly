@@ -32,7 +32,12 @@ const fetchMonthlySummary = async () => {
       page: 0,
       hasMore: true,
       loadingDetails: false,
-      isOpen: false
+      isOpen: false,
+      // Guardar valores originales del resumen para restaurarlos al cerrar
+      originalEncontrados: item.encontrados,
+      originalNoEncontrados: item.noEncontrados,
+      originalPendientes: item.pendientes,
+      originalTotalNinos: item.totalNinos
     }))
   } catch (err) {
     console.error('Error fetching monthly summary:', err)
@@ -94,6 +99,7 @@ const fetchChildren = async (item, isNewSearch = false) => {
     // Actualizar contadores dinámicos según el filtro
     item.encontrados = data.encontrados
     item.noEncontrados = data.no_encontrados
+    item.pendientes = data.pendientes || 0  // Si no viene del backend, usar 0
     
     item.page++
   } catch (err) {
@@ -115,11 +121,36 @@ const fetchEESSOptions = async (item) => {
 
 const toggleMonth = async (item) => {
   if (selectedMonthItem.value === item) {
+    // CERRAR: Restaurar valores originales y limpiar filtros
     selectedMonthItem.value = null
     item.isOpen = false
+    
+    // Restaurar valores originales del resumen
+    item.encontrados = item.originalEncontrados
+    item.noEncontrados = item.originalNoEncontrados
+    item.pendientes = item.originalPendientes
+    item.totalNinos = item.originalTotalNinos
+    
+    // Limpiar datos cargados para forzar recarga en próxima apertura
+    item.children = []
+    item.page = 0
+    item.hasMore = true
+    
+    // Limpiar filtros
+    searchQuery.value = ''
+    eessFilter.value = ''
+    statusFilter.value = ''
+    nuevoFilter.value = ''
   } else {
-    // Cerrar el anterior si existe
-    if (selectedMonthItem.value) selectedMonthItem.value.isOpen = false
+    // ABRIR: Cerrar el anterior si existe
+    if (selectedMonthItem.value) {
+      selectedMonthItem.value.isOpen = false
+      // Restaurar valores del mes anterior
+      selectedMonthItem.value.encontrados = selectedMonthItem.value.originalEncontrados
+      selectedMonthItem.value.noEncontrados = selectedMonthItem.value.originalNoEncontrados
+      selectedMonthItem.value.pendientes = selectedMonthItem.value.originalPendientes
+      selectedMonthItem.value.totalNinos = selectedMonthItem.value.originalTotalNinos
+    }
     
     selectedMonthItem.value = item
     item.isOpen = true
@@ -241,29 +272,30 @@ const formatDate = (dateStr) => {
 
 // La lista estática se mantiene como fallback o base común
 const BASE_EESS_LIST = [
-  'CMI José Gálvez', 'CMI Tablada de Lurín', 'CMI Daniel Alcides Carrión',
-  'CS Villa María del Triunfo', 'CS San Francisco de la Cruz', 'CS Nueva Esperanza',
-  'CS Mariano Melgar', 'CS José Carlos Mariátegui', 'CS Micaela Bastidas',
-  'CSMC Yuyay Wasi', 'CSMC Nuevo Milenio', 'CMI Juan Pablo II', 'CMI San José',
-  'CMI Ollantay', 'CMI Manuel Barreto', 'CS San Juan de Miraflores',
-  'CS Leoncio Prado', 'CS Jesús Poderoso', 'CS Pamplona Alta', 'CS Trébol Azul',
-  'CS María Auxiliadora (No confundir con el hospital)', 'CS Laderas de Villa',
-  'CSMC Javier Mariátegui Chiappe', 'CSMC San Juan de Miraflores', 'CSMC Cali',
-  'CMI César López Silva (El Salvador)', 'CS Brisas de Pachacámac', 'CS Pastor Sevilla',
-  'CS San Martín de Porres', 'CS Héroes del Cenepa', 'CS Lomo de Corvina',
-  'CS Oasis de Villa', 'CSMC Villa El Salvador', 'CSMC San José', 'CMI Lurín',
-  'CMI Portada de Manchay (Pachacámac)', 'CS Pachacámac (Cercado)',
-  'CS Julio C. Tello (Lurín)', 'CS Punta Hermosa', 'CS Punta Negra',
-  'CS San Bartolo', 'CS Santa María del Mar', 'CS Pucusana',
-  'CS Huertos de Manchay', 'CSMC Lurín', 'CSMC Portada de Manchay',
-  'CSMC Balnearios del Sur (Punta Hermosa)', 'CMI Virgen del Carmen (Chorrillos)',
-  'CMI Buenos Aires de Villa', 'CS San Genaro de Villa', 'CS Delicias de Villa',
-  'CS Chorrillos I y II', 'CS Barranco (Distrito de Barranco)',
-  'CS Santiago de Surco (Surco Pueblo)', 'CS San Roque', 'CS Los Próceres',
-  'CSMC Barranco', 'CSMC Chorrillos', 'CSMC Virgen del Carmen',
-  'CSMC Víctor Fran (Surco)', 'CSMC Santiago de Surco', 'CS San Borja',
-  'CS Surquillo', 'CS San Juan de Dios', 'CS Todos los Santos',
-  'CS Casas Huertas', 'CSMC San Borja', 'CSMC Surquillo'
+  'C.M.I. Villa María del Triunfo',
+  'P.S. 12 de Junio',
+  'P.S. Santa Rosa de Belén',
+  'C.S. José Carlos Mariátegui',
+  'P.S. Villa Limatambo',
+  'P.S. Juan Carlos Soberon',
+  'P.S. Buenos Aires',
+  'P.S. Valle Alto',
+  'P.S. Paraíso Alto',
+  'P.S. Valle Bajo',
+  'C.M.I. José Galvez',
+  'P.S. Módulo I',
+  'P.S. Nuevo Progreso',
+  'P.S. Ciudad de Gosen',
+  'C.S. Nueva Esperanza',
+  'P.S. Módulo Virgen de Lourdes',
+  'P.S. Módulo César Vallejo II',
+  'P.S. Nueva Esperanza Alta',
+  'C.S. Daniel A. Carrión',
+  'P.S. Torres de Melgar',
+  'P.S. Micaela Bastidas',
+  'C.M.I. Tablada de Lurín',
+  'P.S. Santa Rosa de las Conchitas',
+  'P.S. David Guerrero Duarte'
 ]
 
 const RANGO_EDAD_OPTIONS = [
@@ -437,6 +469,15 @@ const confirmDeleteChild = async () => {
                     <div class="flex flex-col items-start">
                       <span class="text-lg font-black text-red-600 leading-none">{{ item.noEncontrados }}</span>
                       <span class="text-[8px] font-black text-red-600/60 uppercase tracking-widest mt-0.5">No encontrados</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Pendientes Badge -->
+                  <div class="flex items-center gap-3 px-4 py-2 bg-amber-50 rounded-xl border border-amber-100/40 min-w-[100px] justify-center transition-all hover:bg-amber-100/50">
+                    <Clock class="text-amber-500/50" :size="16" />
+                    <div class="flex flex-col items-start">
+                      <span class="text-lg font-black text-amber-600 leading-none">{{ item.pendientes || 0 }}</span>
+                      <span class="text-[8px] font-black text-amber-600/60 uppercase tracking-widest mt-0.5">Pendientes</span>
                     </div>
                   </div>
                 </div>
@@ -622,7 +663,12 @@ const confirmDeleteChild = async () => {
                         {{ child.establecimiento_asignado || '---' }}
                       </td>
                       <td class="py-3 pr-4 text-right">
-                        <span :class="['px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider', child.estado.toLowerCase() === 'encontrado' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600']">
+                        <span :class="[
+                          'px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider',
+                          child.estado.toLowerCase() === 'encontrado' ? 'bg-green-50 text-green-600' :
+                          child.estado.toLowerCase() === 'pendiente' ? 'bg-amber-50 text-amber-600' :
+                          'bg-red-50 text-red-600'
+                        ]">
                           {{ child.estado }}
                         </span>
                       </td>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { FileUp, Users, UserPlus, RefreshCcw, Clock, Download, Package, Calendar, X, CheckCircle, AlertCircle, Info, ChevronRight, FileSpreadsheet } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
@@ -68,6 +68,19 @@ const selectedFile = ref(null)
 const selectedMonth = ref(new Date().getMonth() + 1)
 const selectedYear = ref(new Date().getFullYear())
 
+// Filtro de EESS
+const eessFilter = ref('')
+const eessOptions = ref([])
+const fileInputRef = ref(null)
+
+// Datos filtrados calculados
+const filteredPreviewRows = computed(() => {
+  if (!eessFilter.value) return previewRows.value
+  return previewRows.value.filter(row => 
+    row.establecimiento_asignado === eessFilter.value
+  )
+})
+
 // Variables para feedback de carga
 const showSuccessModal = ref(false)
 const showErrorModal = ref(false)
@@ -94,6 +107,14 @@ const handlePreview = async (file) => {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
     previewRows.value = response.data.registros
+    
+    // Extraer valores únicos de EESS para el filtro
+    const uniqueEess = [...new Set(response.data.registros
+      .map(r => r.establecimiento_asignado)
+      .filter(Boolean)
+    )].sort()
+    eessOptions.value = uniqueEess
+    
     showPreview.value = true
     uploadStatus.value = null
   } catch (err) {
@@ -114,6 +135,13 @@ const cancelPreview = () => {
   previewRows.value = []
   selectedFile.value = null
   uploadStatus.value = null
+  eessFilter.value = ''
+  eessOptions.value = []
+  
+  // Resetear el input file
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+  }
 }
 
 const confirmUpload = async () => {
@@ -126,6 +154,11 @@ const confirmUpload = async () => {
   formData.append('file', selectedFile.value)
   formData.append('mes', selectedMonth.value)
   formData.append('anio', selectedYear.value)
+  
+  // Agregar filtro EESS si está seleccionado
+  if (eessFilter.value) {
+    formData.append('eess_filter', eessFilter.value)
+  }
 
   try {
     const response = await apiClient.post('/excel/upload', formData, {
@@ -143,7 +176,13 @@ const confirmUpload = async () => {
     showPreview.value = false
     previewRows.value = []
     selectedFile.value = null
+    eessFilter.value = ''
     uploadStatus.value = null
+    
+    // Resetear el input file para permitir seleccionar otro archivo
+    if (fileInputRef.value) {
+      fileInputRef.value.value = ''
+    }
     showSuccessModal.value = true
     
     // Pequeño delay antes de refrescar estadísticas para asegurar persistencia DB
@@ -242,6 +281,7 @@ const confirmUpload = async () => {
           </div>
           <div class="card-minimal p-8 flex flex-col items-center text-center justify-center relative border-dashed border-2 border-gray-100 bg-gray-50/50 flex-1 min-h-[300px] transition-all group hover:border-indigo-200">
             <input 
+              ref="fileInputRef"
               type="file" 
               accept=".xlsx, .xls, .xlsm"
               @change="handleFileUpload"
@@ -312,13 +352,36 @@ const confirmUpload = async () => {
             <div>
               <h3 class="text-xl font-bold text-gray-900">Vista Previa de Carga</h3>
               <p class="text-sm text-gray-600 font-bold flex items-center gap-2">
-                <span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-lg text-xs">{{ previewRows.length }}</span>
+                <span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-lg text-xs">{{ filteredPreviewRows.length }}</span>
                 Niños únicos detectados para ingresar
               </p>
             </div>
             <button @click="cancelPreview" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-600">
               <X :size="24" />
             </button>
+          </div>
+          
+          <!-- Filtro de EESS -->
+          <div class="px-6 pb-4 pt-2 border-b border-gray-100 bg-gray-50/30">
+            <div class="flex items-center gap-4">
+              <label class="text-[9px] font-black uppercase tracking-widest text-gray-400">
+                Filtrar por EESS:
+              </label>
+              <select 
+                v-model="eessFilter"
+                class="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-2 text-xs font-bold focus:ring-2 focus:ring-indigo-200 outline-none"
+              >
+                <option value="">Todos los establecimientos</option>
+                <option v-for="eess in eessOptions" :key="eess" :value="eess">
+                  {{ eess }}
+                </option>
+              </select>
+              <div class="px-4 py-2 bg-indigo-50 rounded-xl">
+                <span class="text-xs font-black text-indigo-600">
+                  {{ filteredPreviewRows.length }} registros
+                </span>
+              </div>
+            </div>
           </div>
           
           <div class="overflow-auto flex-1 p-0">
@@ -337,7 +400,7 @@ const confirmUpload = async () => {
                 </tr>
               </thead>
               <tbody class="text-[11px] text-gray-600 font-medium divide-y divide-gray-50">
-                <tr v-for="(row, idx) in previewRows" :key="idx" class="hover:bg-indigo-50/20 transition-colors">
+                <tr v-for="(row, idx) in filteredPreviewRows" :key="idx" class="hover:bg-indigo-50/20 transition-colors">
                   <td class="py-2.5 pl-6 text-center font-bold text-gray-300">{{ idx + 1 }}</td>
                   <td class="py-2.5 px-4 font-mono font-bold text-gray-700">{{ row.dni_nino }}</td>
                   <td class="py-2.5 px-4 text-gray-900 font-bold uppercase">{{ row.nombres }}</td>

@@ -9,6 +9,7 @@ alembic==1.13.1
 python-dotenv==1.0.1
 pandas==2.2.0
 openpyxl==3.1.2
+xlsxwriter==3.1.9
 slowapi==0.1.9
 reportlab==4.0.9
 gunicorn==21.2.0

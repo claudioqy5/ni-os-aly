@@ -59,7 +59,8 @@ def get_monthly_summary(db: Session = Depends(get_db), current_user: models.Usua
         func.count(func.distinct(models.Visita.nino_id)).label("totalNinos"),
         # Contar NIÑOS únicos por estado
         func.count(func.distinct(case((models.Visita.estado == 'encontrado', models.Visita.nino_id), else_=None))).label("encontrados"),
-        func.count(func.distinct(case((models.Visita.estado == 'no encontrado', models.Visita.nino_id), else_=None))).label("noEncontrados")
+        func.count(func.distinct(case((models.Visita.estado == 'no encontrado', models.Visita.nino_id), else_=None))).label("noEncontrados"),
+        func.count(func.distinct(case((models.Visita.estado == 'pendiente', models.Visita.nino_id), else_=None))).label("pendientes")
     ).filter(
         models.Visita.user_id == current_user.id
     ).group_by(
@@ -81,7 +82,8 @@ def get_monthly_summary(db: Session = Depends(get_db), current_user: models.Usua
             "total": r.total or 0,
             "totalNinos": r.totalNinos or 0,
             "encontrados": int(r.encontrados or 0),
-            "noEncontrados": int(r.noEncontrados or 0)
+            "noEncontrados": int(r.noEncontrados or 0),
+            "pendientes": int(r.pendientes or 0)
         })
     return summary
 
@@ -185,9 +187,14 @@ def read_monthly_detail(
             )
         if eess:
             base_stats_query = base_stats_query.filter(models.Nino.establecimiento_asignado == eess)
+        
+        # Aplicar filtro de estado si existe
+        if estado:
+            base_stats_query = base_stats_query.filter(models.Visita.estado == estado.lower())
 
         encontrados_count = base_stats_query.filter(models.Visita.estado == 'encontrado').scalar() or 0
         no_encon_count = base_stats_query.filter(models.Visita.estado == 'no encontrado').scalar() or 0
+        pendientes_count = base_stats_query.filter(models.Visita.estado == 'pendiente').scalar() or 0
 
         # 4. Primera visita histórica (Eficiente para el flag es_nuevo)
         first_visits = db.query(
@@ -236,6 +243,7 @@ def read_monthly_detail(
             "total_children": total_unique_children,
             "encontrados": encontrados_count,
             "no_encontrados": no_encon_count,
+            "pendientes": pendientes_count,
             "children": final_list,
             "has_more": (skip + limit) < total_unique_children
         }

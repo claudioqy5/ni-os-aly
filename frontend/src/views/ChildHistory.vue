@@ -376,7 +376,12 @@ const formatDate = (dateStr) => {
                         <div class="flex-grow space-y-4">
                             <div v-if="editingVisitaId !== visita.id" class="space-y-3">
                                 <div class="flex flex-wrap items-center gap-2">
-                                    <span :class="['px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border', visita.estado?.toLowerCase() === 'encontrado' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100']">{{ visita.estado }}</span>
+                                    <span :class="[
+                                      'px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border',
+                                      visita.estado?.toLowerCase() === 'encontrado' ? 'bg-green-50 text-green-600 border-green-100' :
+                                      visita.estado?.toLowerCase() === 'pendiente' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                      'bg-red-50 text-red-600 border-red-100'
+                                    ]">{{ visita.estado }}</span>
                                     <span class="text-[10px] font-bold text-gray-500 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100 flex items-center gap-1.5"><Activity :size="10" /> {{ visita.establecimiento_atencion || 'Sin EESS' }}</span>
                                     <span class="text-[10px] font-bold text-gray-500 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100 flex items-center gap-1.5"><User :size="10" class="text-brand-pink-400" /> {{ visita.actor_social || 'Sin Actor' }}</span>
                                 </div>

@@ -89,7 +89,7 @@ const getStatusClass = (estado) => {
   const s = (estado || 'Pendiente').toLowerCase()
   if (s === 'encontrado') return 'text-green-600 bg-green-50 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider'
   if (s === 'no encontrado') return 'text-red-600 bg-red-50 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider'
-  return 'text-gray-400 bg-gray-50 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider'
+  return 'text-amber-600 bg-amber-50 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider'
 }
 
 const goToDetail = (id) => {

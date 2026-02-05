@@ -242,7 +242,7 @@ def get_excel_preview(file_content: bytes):
         print(f"Error en vista previa: {e}")
         return []
 
-def process_minsa_excel(file_content: bytes, db: Session, mes: int, anio: int, user_id: int):
+def process_minsa_excel(file_content: bytes, db: Session, mes: int, anio: int, user_id: int, eess_filter: str = None):
     try:
         print(f"--- Iniciando procesamiento Excel: {mes}/{anio} ---")
         df = get_mapped_dataframe(file_content)
@@ -280,6 +280,19 @@ def process_minsa_excel(file_content: bytes, db: Session, mes: int, anio: int, u
         df['celular_madre'] = df['celular_madre'].apply(clean_dni_val).str.slice(0, 15)
         df['rango_edad'] = df['rango_edad'].fillna('').astype(str).str.slice(0, 50)
         df['historia_clinica'] = df['historia_clinica'].fillna('').astype(str).str.slice(0, 50)
+        
+        # Aplicar filtro de EESS si existe
+        if eess_filter:
+            df['establecimiento_normalizado'] = df['establecimiento_asignado'].apply(
+                lambda x: normalize_eess_name(x) if pd.notna(x) else None
+            )
+            eess_filter_normalizado = normalize_eess_name(eess_filter)
+            df = df[df['establecimiento_normalizado'] == eess_filter_normalizado]
+            df = df.drop(columns=['establecimiento_normalizado'])
+            
+            if df.empty:
+                print(f"No se encontraron registros para el EESS: {eess_filter}")
+                return 0, 0, 0
         
         # 2. Precargar Datos de la DB (Solo del usuario actual)
         unique_dnis = df['dni_final'].unique().tolist()
