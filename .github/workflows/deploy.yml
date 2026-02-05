@@ -20,6 +20,9 @@ jobs:
         username: ${{ secrets.VPS_USER }}
         key: ${{ secrets.VPS_SSH_KEY }}
         script: |
+          # Configurar git safe directory para evitar errores de permisos
+          git config --global --add safe.directory /var/www/ninos-aly
+          
           cd /var/www/ninos-aly
           
           # Pull últimos cambios
