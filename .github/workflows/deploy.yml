@@ -31,7 +31,8 @@ jobs:
           # Backend
           cd backend
           source ../venv/bin/activate
-          pip install -r requirements.txt
+          pip install --upgrade -r requirements.txt
+          pip list
           
           # Frontend
           cd ../frontend
