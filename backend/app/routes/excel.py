@@ -169,6 +169,7 @@ async def upload_excel(
     file: UploadFile = File(...),
     mes: int = Form(...),
     anio: int = Form(...),
+    eess_filter: str = Form(None),
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user)
 ):
@@ -204,7 +205,7 @@ async def upload_excel(
         
         # 2. PROCESAMIENTO SÍNCRONO para feedback inmediato
         try:
-            total_visitas, repetidos, nuevos = process_minsa_excel(content, db, mes, anio, current_user.id)
+            total_visitas, repetidos, nuevos = process_minsa_excel(content, db, mes, anio, current_user.id, eess_filter)
             
             # 3. Actualizar registro y devolver resultados
             nueva_carga.estado = "completado"
