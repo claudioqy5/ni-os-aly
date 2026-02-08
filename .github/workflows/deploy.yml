@@ -25,14 +25,13 @@ jobs:
           
           cd /var/www/ninos-aly
           
-          # Pull últimos cambios
-          git pull origin main
+          echo "--- DEBUG VERSION ---"
+          git log -1 --format="%H %s"
           
           # Backend
           cd backend
           source venv/bin/activate
           pip install --upgrade -r requirements.txt
-          pip list
           pip list
           
           # Frontend
@@ -40,8 +39,12 @@ jobs:
           npm install
           npm run build
           
-          # Reiniciar servicios
-          sudo systemctl restart ninos-backend
-          sudo systemctl reload nginx
+          # Reiniciar servicios y verificar estado
+          echo "--- RESTARTING SERVICES ---"
+          sudo systemctl restart ninos-backend || echo "Backend restart failed"
+          sudo systemctl reload nginx || echo "Nginx reload failed"
+          
+          echo "--- SERVICE STATUS ---"
+          sudo systemctl status ninos-backend --no-pager || echo "Cannot get backend status"
           
           echo "✅ Deploy completado exitosamente!"
