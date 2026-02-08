@@ -219,7 +219,8 @@ async def upload_excel(
                 "nuevos": nuevos,
                 "existentes": repetidos,
                 "archivo": file.filename,
-                "estado": "completado"
+                "estado": "completado",
+                "filter_received": eess_filter
             }
         except Exception as process_error:
             nueva_carga.estado = "error"

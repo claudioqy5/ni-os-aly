@@ -170,8 +170,9 @@ const confirmUpload = async () => {
     const total = response.data.total_registros || 0
     const n = response.data.nuevos || 0
     const e = response.data.existentes || 0
+    const f = response.data.filter_received || "NINGUNO"
     
-    uploadResults.value = { nuevos: n, existentes: e, total: total }
+    uploadResults.value = { nuevos: n, existentes: e, total: total, filter: f }
     
     showPreview.value = false
     previewRows.value = []
@@ -475,6 +476,10 @@ const confirmUpload = async () => {
                 <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Existentes</p>
                 <p class="text-xl font-black text-gray-900">{{ uploadResults.existentes }}</p>
               </div>
+            </div>
+            <div class="mt-4 p-3 bg-gray-100 rounded-xl text-center">
+              <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Filtro Aplicado (DEBUG)</p>
+              <p class="text-xs font-bold text-indigo-500 font-mono">{{ uploadResults.filter }}</p>
             </div>
             <button 
               @click="showSuccessModal = false"
