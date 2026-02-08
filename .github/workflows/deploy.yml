@@ -33,6 +33,10 @@ jobs:
           
           # Backend
           cd backend
+          
+          # Create/Update .env from Secret (Correct way to handle production config)
+          echo "${{ secrets.PROD_ENV_FILE }}" > .env
+          
           source venv/bin/activate
           pip install --upgrade -r requirements.txt
           pip list
