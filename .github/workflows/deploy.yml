@@ -20,13 +20,13 @@ jobs:
         username: ${{ secrets.VPS_USER }}
         key: ${{ secrets.VPS_SSH_KEY }}
         script: |
-          # Configurar git safe directory para evitar errores de permisos
           git config --global --add safe.directory /var/www/ninos-aly
           
           cd /var/www/ninos-aly
           
-          # Pull latest changes
-          git pull origin main
+          # Force sync to origin/main (Robust Deployment Strategy)
+          git fetch --all
+          git reset --hard origin/main
           
           echo "--- DEBUG VERSION ---"
           git log -1 --format="%H %s"
@@ -37,6 +37,9 @@ jobs:
           pip install --upgrade -r requirements.txt
           pip list
           
+          # Check for blocking migrations (Usually none, but good to check)
+          # alembic upgrade head || echo "Alembic skipped or failed (non-blocking)"
+          
           # Frontend
           cd ../frontend
           npm install
@@ -44,10 +47,17 @@ jobs:
           
           # Reiniciar servicios y verificar estado
           echo "--- RESTARTING SERVICES ---"
-          sudo systemctl restart ninos-backend || echo "Backend restart failed"
+          sudo systemctl restart ninos-backend || echo "Backend restart command failed"
           sudo systemctl reload nginx || echo "Nginx reload failed"
           
+          # Wait for service to initialize or crash
+          echo "Waiting for service to stabilize..."
+          sleep 10
+          
           echo "--- SERVICE STATUS ---"
-          sudo systemctl status ninos-backend --no-pager || echo "Cannot get backend status"
+          sudo systemctl status ninos-backend --no-pager || echo "Backend status check failed"
+          
+          echo "--- RECENT LOGS ---"
+          sudo journalctl -u ninos-backend --no-pager -n 50 || echo "Cannot fetch logs"
           
           echo "✅ Deploy completado exitosamente!"

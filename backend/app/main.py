@@ -2,6 +2,7 @@ import os
 import logging
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
+# Force redeploy trigger: 2026-02-08-FIX-DEPLOY-LOOP-2
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
