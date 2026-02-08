@@ -83,3 +83,16 @@ app.include_router(excel.router)
 @app.get("/")
 async def root():
     return {"message": "Bienvenida Alicia. El backend de Niños Aly está corriendo."}
+
+@app.get("/debug-system")
+def debug_system():
+    import pkg_resources
+    import sys
+    installed_packages = {pkg.key: pkg.version for pkg in pkg_resources.working_set}
+    return {
+        "python_version": sys.version,
+        "executable": sys.executable,
+        "sys_path": sys.path,
+        "installed_packages": installed_packages,
+        "xlsxwriter_status": "INSTALLED" if "xlsxwriter" in installed_packages else "MISSING"
+    }
