@@ -159,8 +159,10 @@ def export_monthly_report(
         )
         
     except Exception as e:
-        print(f"Error export: {e}")
-        raise HTTPException(status_code=500, detail=f"Error generando reporte: {str(e)}")
+        import traceback
+        error_msg = traceback.format_exc()
+        print(f"Error export: {error_msg}")
+        raise HTTPException(status_code=500, detail=f"Error generando reporte: {str(e)}\n\nTraceback: {error_msg}")
 
 @router.post("/upload")
 async def upload_excel(

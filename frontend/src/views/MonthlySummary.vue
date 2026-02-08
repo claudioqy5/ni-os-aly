@@ -214,6 +214,22 @@ const downloadReport = async (item) => {
     link.remove()
   } catch (err) {
     console.error('Error downloading report:', err)
+    
+    // Si la respuesta es un Blob (debido a responseType: 'blob'), intentar leer el mensaje de error
+    if (err.response?.data instanceof Blob) {
+      try {
+        const errorText = await err.response.data.text()
+        console.error("Detalle del error del backend:", errorText)
+        const errorJson = JSON.parse(errorText)
+        if (errorJson.detail) {
+          globalError.value = `Error del servidor: ${errorJson.detail}`
+          return
+        }
+      } catch (e) {
+        console.error("No se pudo leer el error del blob", e)
+      }
+    }
+    
     globalError.value = "No se pudo descargar el reporte con los filtros actuales."
   }
 }
