@@ -33,6 +33,7 @@ onMounted(async () => {
     return
   }
   await fetchStats()
+  console.log("%c FRONTEND VERSION: 2026-02-08 EESS FILTER FIXED", "background: #222; color: #bada55; font-size: 20px")
 })
 
 const fetchStats = async () => {

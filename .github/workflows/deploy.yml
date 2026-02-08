@@ -25,6 +25,10 @@ jobs:
           
           cd /var/www/ninos-aly
           
+          # Force sync to ensure we have latest code
+          git fetch --all
+          git reset --hard origin/main
+          
           echo "--- DEBUG VERSION ---"
           git log -1 --format="%H %s"
           
