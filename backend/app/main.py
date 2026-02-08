@@ -88,11 +88,31 @@ async def root():
 def debug_system():
     import pkg_resources
     import sys
+    import os
+    import re
+    
     installed_packages = {pkg.key: pkg.version for pkg in pkg_resources.working_set}
+    
+    # Check updated code in excel.py
+    upload_sig = "Not readable"
+    try:
+        # Adjust path relative to where main.py is (app/main.py -> app/routes/excel.py)
+        # Assuming run from backend/ root
+        target_path = "app/routes/excel.py"
+        if not os.path.exists(target_path):
+            target_path = "backend/app/routes/excel.py" # Fallback
+            
+        with open(target_path, "r") as f:
+            content = f.read()
+            match = re.search(r"def upload_excel\s*\(.*?\):", content, re.DOTALL)
+            upload_sig = match.group(0) if match else "Function not found"
+    except Exception as e:
+        upload_sig = f"Error reading file: {str(e)}"
+
     return {
         "python_version": sys.version,
         "executable": sys.executable,
-        "sys_path": sys.path,
-        "installed_packages": installed_packages,
+        "cwd": os.getcwd(),
+        "upload_excel_signature": upload_sig,
         "xlsxwriter_status": "INSTALLED" if "xlsxwriter" in installed_packages else "MISSING"
     }
